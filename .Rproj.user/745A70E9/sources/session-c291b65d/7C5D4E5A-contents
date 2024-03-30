@@ -1,0 +1,760 @@
+server = function(input, output) {
+
+  # config ----
+  
+  runjs('
+        var el2 = document.querySelector(".skin-blue");
+        el2.className = "skin-blue sidebar-mini";
+        ')
+  
+  # Introduction ----
+  
+  # output$introduction = renderText({HTML(home_whole_intro_text)})
+  
+  output$home_slick_output = renderSlickR(
+    {
+    #imgs = list.files("www/Data/show_merge_pic/", pattern=".png", full.names = TRUE)
+      x = slickR(
+        slick_intro_plot, slideType = "img",
+        slideId = 'slick_intro_plot_id',
+        height = 800,
+        width = '100%'
+      )  + 
+        settings(dots = FALSE)
+      
+    }
+  )
+  
+  # integration ----
+  
+  observe({
+    toggleState(id ="graph_integration_Reactome_result",
+                condition = !is.null(input$graph_integration_file))
+  })
+  
+  observe({
+    toggleState(id ="graph_integration_STRING_result",
+                condition = !is.null(input$graph_integration_file))
+  })
+  
+  shinyjs::hide(id = "graph_integration_Reactome_result")
+  shinyjs::hide(id = "graph_integration_STRING_result")
+  
+  ## Reactome ----
+  
+  graph_integration_Reactome_result_convert = eventReactive(input$graph_integration_Reactome_update, {
+    
+    netInput_ = read_csv(file.path('material', 'integration', 'bgNet', 'Reactome.csv'))
+    
+    file_ = fread(input$graph_integration_file$datapath) |> 
+      mutate(across(-1, scale))
+    
+    if (!is.null(input$graph_integration_mask)) {
+      
+      matsMask_ = input$graph_integration_mask$datapath |> 
+        lapply(fread)
+      
+    } else {
+      
+      matsMask_ = list()
+      
+    }
+    
+    EPm_test_ = calEPm(file_, input$graph_integration_Reactome_normal, netInput_, input$graph_integration_nThread, matsMask_) 
+    
+    return(list(netInput_, EPm_test_))
+    
+  })
+  
+  
+  observeEvent(input$graph_integration_Reactome_update, {
+    shinyjs::show(id = "graph_integration_Reactome_result")
+    
+    res_graph_integration_Reactome_result_convert = graph_integration_Reactome_result_convert()
+    
+    nRow = 9
+    
+    output$graph_integration_Reactome_result_converted_datatable = renderUI({
+      DT::datatable(
+        res_graph_integration_Reactome_result_convert[[2]][1:nRow, 1:(nRow + 1)] |> mutate(across(-1, ~ signif(.x, digits = 5))),
+        rownames = F,
+        caption = htmltools::tags$caption(
+          style = "font-size:14px",
+          htmltools::em(paste("Table: Converted Matrix: ", sep = " "))
+        ),
+        options = list(
+          scrollX = TRUE, 
+          dom = "frtip",
+          columnDefs =
+            list(list(
+              className = "dt-center",
+              targets = "_all"
+            )),
+          pageLength = 10,
+          initComplete = JS(
+            "function(settings, json) {",
+            "$(this.api().table().header()).css({'background-color': '#2e6b47', 'color': '#fff'});",
+            "}"
+          )
+        )
+      )
+
+    })
+    
+    output$graph_integration_Reactome_result_converted_netInput = renderUI({
+      DT::datatable(
+        res_graph_integration_Reactome_result_convert[[1]][1:nRow, ],
+        rownames = F,
+        caption = htmltools::tags$caption(
+          style = "font-size:14px",
+          htmltools::em(paste("Table for Feature Lookup: ", sep = " "))
+        ),
+        options = list(
+          scrollX = TRUE, 
+          dom = "frtip",
+          columnDefs =
+            list(list(
+              className = "dt-center",
+              targets = "_all"
+            )),
+          pageLength = 10,
+          initComplete = JS(
+            "function(settings, json) {",
+            "$(this.api().table().header()).css({'background-color': '#2e6b47', 'color': '#fff'});",
+            "}"
+          )
+        )
+      )
+    })
+    
+    
+  })
+  
+  ## STRING ----
+  
+  graph_integration_STRING_result_convert = eventReactive(input$graph_integration_STRING_update, {
+    
+    netInput_ = read_csv(file.path('material', 'integration', 'bgNet', 'STRING.csv'))
+    
+    file_ = fread(input$graph_integration_file$datapath) |> 
+      mutate(across(-1, scale))
+    
+    EPm_test_ = calEPm(file_, input$graph_integration_STRING_normal, netInput_, input$graph_integration_nThread) 
+    
+    return(list(netInput_, EPm_test_))
+    
+  })
+  
+  
+  observeEvent(input$graph_integration_STRING_update, {
+    shinyjs::show(id = "graph_integration_STRING_result")
+    
+    res_graph_integration_STRING_result_convert = graph_integration_STRING_result_convert()
+    
+    nRow = 9
+    
+    output$graph_integration_STRING_result_converted_datatable = renderUI({
+      DT::datatable(
+        res_graph_integration_STRING_result_convert[[2]][1:nRow, 1:(nRow + 1)] |> mutate(across(-1, ~ signif(.x, digits = 5))),
+        rownames = F,
+        caption = htmltools::tags$caption(
+          style = "font-size:14px",
+          htmltools::em(paste("Table: Converted Matrix: ", sep = " "))
+        ),
+        options = list(
+          scrollX = TRUE, 
+          dom = "frtip",
+          columnDefs =
+            list(list(
+              className = "dt-center",
+              targets = "_all"
+            )),
+          pageLength = 10,
+          initComplete = JS(
+            "function(settings, json) {",
+            "$(this.api().table().header()).css({'background-color': '#2e6b47', 'color': '#fff'});",
+            "}"
+          )
+        )
+      )
+      
+    })
+    
+    output$graph_integration_STRING_result_converted_netInput = renderUI({
+      DT::datatable(
+        res_graph_integration_STRING_result_convert[[1]][1:nRow, ],
+        rownames = F,
+        caption = htmltools::tags$caption(
+          style = "font-size:14px",
+          htmltools::em(paste("Table for Feature Lookup: ", sep = " "))
+        ),
+        options = list(
+          scrollX = TRUE, 
+          dom = "frtip",
+          columnDefs =
+            list(list(
+              className = "dt-center",
+              targets = "_all"
+            )),
+          pageLength = 10,
+          initComplete = JS(
+            "function(settings, json) {",
+            "$(this.api().table().header()).css({'background-color': '#2e6b47', 'color': '#fff'});",
+            "}"
+          )
+        )
+      )
+      
+    })
+    
+    
+  })
+  
+  # enrich ----
+  
+  shinyjs::hide(id = "graph_enrichment_result")
+  observe({
+    toggleState(id ="graph_enrichment_update",
+                condition = !is.null(input$graph_enrichment_file))
+  })
+  
+  ## enrich-summarise ----
+  
+  
+  graph_enrichment_result_summarise = eventReactive(input$graph_enrichment_update, {
+    
+    netInput   = read_csv(file.path('material', 'predict', 'model', input$graph_enrichment_bgNet, 'background.network.csv'))
+    inputGenes = fread(input$graph_enrichment_file$datapath, header = F)[[1]]
+    
+    genesetTable_ = c(Hallmark = "./material/reference/h.all.v2023.2.Hs.symbols.gmt", KEGG = "")
+    geneset_ = read_gmt(genesetTable_[[input$graph_enrichment_pathway]])
+    
+    resEnrich = enrichGraph(inputGenes, geneset_, 'all', netInput, 1)
+    plotEnrich = resEnrich |> 
+      filter(p < 0.05) |> 
+      slice_max(ES, n = 5, with_ties = F) |> 
+      arrange(ES) |> 
+      mutate(pathway = pathway |> str_sub(10) |> str_replace_all('_', ' '), 
+             pathway = map_chr(pathway, ~ ifelse(str_detect(.x, ' '), splitTerms(.x), .x)), 
+             pathway = factor(pathway, levels = pathway), 
+             p = pToLabel(p)) |> 
+      ggplot() +
+      geom_col(aes(ES, pathway, fill = p)) +
+      geom_text(aes(ES, pathway, label = pathway)) +
+      scale_fill_manual(values = c("FDR<0.001" = "#4e62ab", "FDR<0.01" = "#479db4", "FDR<0.05" = "#87d0a6", 'FDR>0.05' = "#cbe99d")) +
+      scale_x_continuous(expand = c(0, 0, 0, 0.05)) +
+      scale_y_discrete(breaks = NULL) +
+      labs(fill = '') +
+      xlab('Enrichment Score Based on Graph') +
+      ylab('') +
+      theme_classic() +
+      theme(
+        legend.position = "top"
+      )
+    
+    netSig = netInput |> 
+      filter(X1 %in% inputGenes & X2 %in% inputGenes) |> 
+      slice_sample(n = 200)
+    
+    graphGI = as_tbl_graph(netSig, directed = F) |> 
+      activate(nodes) |> 
+      mutate(deg = centrality_degree(mode = 'in'))
+    
+    plotGI = ggraph(graphGI, layout = 'kk') + 
+      geom_edge_fan(color = "#394c81", alpha = 0.8, show.legend = FALSE) + 
+      geom_node_point(aes(size = deg), shape = 21, fill = '#94697a') + 
+      geom_node_label(aes(filter = deg > 2, label = name), size = 3, repel = T, max.overlaps = Inf) +
+      scale_color_discrete() +
+      scale_edge_width(range=c(0.2,3)) +
+      guides(size = F,fill = F) +
+      theme_graph()
+    
+    resPlot = plot_grid(plotlist = list(plotGI, plotEnrich), align = "v", ncol = 1, rel_heights = c(3, 1.5))
+    
+    return(list(resEnrich, resPlot))
+    
+  })
+  
+  observeEvent(input$graph_enrichment_update, {
+    shinyjs::show(id = "graph_enrichment_result")
+    
+    plot_table = graph_enrichment_result_summarise()
+    
+    output$graph_enrichment_result_datatable = renderUI({
+      DT::datatable(
+        plot_table[[1]],
+        rownames = F,
+        options = list(
+          dom = "frtip",
+          columnDefs =
+            list(list(
+              className = "dt-center",
+              targets = "_all"
+            )),
+          pageLength = 9,
+          initComplete = JS(
+            "function(settings, json) {",
+            "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
+            "}"
+          )
+        )
+      )
+    })
+    
+    output$graph_enrichment_result_plot = renderPlot(
+      {
+        plot(plot_table[[2]])
+      },
+      height = 1000,
+      width = 800
+    )
+    
+  })
+  
+  # browse ----
+  
+  shinyjs::hide(id = "show_model_result")
+  
+  ## browse-modelinfos ----
+  
+  show_model_result_modelinfos = eventReactive(input$show_model_update, {
+    
+    netInput   = read_csv(file.path('material', 'predict', 'model', input$show_model_bgNet, 'background.network.csv'))
+    learnerLst = readRDS(file.path('material', 'predict', 'model', input$show_model_bgNet, input$show_model_normal, paste0('learner_', input$show_model_model, '.Rds')))
+    phenotype  = read_csv('material/predict/phenotype.csv')
+    
+    ### features ----
+    
+    #### coef ----
+    
+    if (str_detect(input$show_model_model, 'lasso')) {
+      
+      coefModel = as.matrix(learnerLst$learner$model$beta)[, which.min(abs(learnerLst$learner$model$lambda - 0.01))]
+      
+    } else {
+      
+      coefModel = learnerLst$learner$model |> 
+        coef() |> 
+        as.matrix() |> 
+        apply(2, sum); names(coefModel) = learnerLst$learner$state$train_task$feature_names
+      
+    }
+    
+    if (str_detect(input$show_model_model, 'PCA')) {
+      
+      coefModel = (learnerLst$process$state$rotation[, 1:100] %*% coefModel)[, 1]
+      
+    } 
+    
+    dataPlotCoef = coefModel |> 
+      as_tibble(rownames = 'feature') |> 
+      set_names(c('feature', 'coef')) |> 
+      slice_max(abs(coef), n = 20) |>
+      mutate(color = ifelse(coef > 0, "#94697a", "#394c81")) |> 
+      inner_join(netInput, by = c('feature' = 'id')) |> 
+      mutate(feature = paste(X1, X2, sep = '-')) |> 
+      arrange(coef) |> 
+      mutate(feature = factor(feature, levels = feature)) 
+    
+    plotCoef = ggplot() +
+      geom_col(data = dataPlotCoef, aes(coef, feature, fill = color), alpha = 0.9) +
+      geom_text(data = dataPlotCoef |> filter(coef>0), aes(-max(dataPlotCoef$coef) * 0.01, feature, label = feature, color = color), hjust = 1) +
+      geom_text(data = dataPlotCoef |> filter(coef<0), aes(max(dataPlotCoef$coef) * 0.01, feature, label = feature, color = color), hjust = 0) +
+      scale_y_discrete(breaks = NULL) +
+      scale_x_continuous(position = "top") +
+      scale_color_identity() +
+      scale_fill_identity() +
+      theme_classic() +
+      xlab('Coefficient') +
+      ylab("") +
+      theme(
+        axis.line.y = element_blank(), axis.ticks.y = element_blank()
+      )
+    
+    #### graph ----
+    
+    sigInteractions = coefModel
+    
+    if (str_detect(input$show_model_model, 'PCA')) {
+      
+      sigInteractions = names(sort(abs(coefModel), decreasing = T))[1:100]
+      
+    } else {
+      
+      sigInteractions = names(coefModel[which(coefModel != 0)])
+      
+    }
+ 
+    netSig = netInput |> 
+      filter(id %in% sigInteractions)
+    
+    ##### enrich ----
+    
+    inputGenes = unique(c(netSig$X1, netSig$X2))
+    
+    hallmark = read_gmt("./material/reference/h.all.v2023.2.Hs.symbols.gmt")
+    
+    
+    resEnrich = enrichGraph(inputGenes, hallmark, 'all', netInput, 1)
+    plotEnrich = resEnrich |> 
+      filter(p < 0.05) |> 
+      slice_max(ES, n = 5, with_ties = F) |> 
+      arrange(ES) |> 
+      mutate(pathway = pathway |> str_sub(10) |> str_replace_all('_', ' '), 
+             pathway = map_chr(pathway, ~ ifelse(str_detect(.x, ' '), splitTerms(.x), .x)), 
+             pathway = factor(pathway, levels = pathway), 
+             p = pToLabel(p)) |> 
+      ggplot() +
+      geom_col(aes(ES, pathway, fill = p)) +
+      geom_text(aes(ES, pathway, label = pathway)) +
+      scale_fill_manual(values = c("FDR<0.001" = "#4e62ab", "FDR<0.01" = "#479db4", "FDR<0.05" = "#87d0a6", 'FDR>0.05' = "#cbe99d")) +
+      scale_x_continuous(expand = c(0, 0, 0, 0.05)) +
+      scale_y_discrete(breaks = NULL) +
+      labs(fill = '') +
+      xlab('Enrichment Score Based on Graph') +
+      ylab('') +
+      theme_classic() +
+      theme(
+        legend.position = "top"
+      )
+    
+    ##### geneInteraction ----
+    
+    graphGI = as_tbl_graph(netSig, directed = F) |> 
+      activate(nodes) |> 
+      mutate(deg = centrality_degree(mode = 'in'))
+    
+    plotGI = ggraph(graphGI, layout = 'kk') + 
+      geom_edge_fan(color = "#394c81", alpha = 0.8, show.legend = FALSE) + 
+      geom_node_point(aes(size = deg), shape = 21, fill = '#94697a') + 
+      geom_node_label(aes(filter = deg > 2, label = name), size = 3, repel = T, max.overlaps = Inf) +
+      scale_color_discrete() +
+      scale_edge_width(range=c(0.2,3)) +
+      guides(size = F,fill = F) +
+      theme_graph()
+    
+    ### indicator ----
+    
+    #### cindex ----
+    
+    stackedPrediction = learnerLst$cv5$predictions() |> 
+      lapply(\(pre_) as.data.table(pre_) |> mutate(distr = 0) |> select(-distr)) |> 
+      bind_rows() |> 
+      rename_with(~ str_replace_all(.x, '.1', ''), contains(".1")) 
+    
+    eachDataset = bind_rows(stackedPrediction, stackedPrediction) |> 
+      mutate(sample = learnerLst$sample[row_ids]) |> 
+      inner_join(phenotype |> select(sample, distinct), by = 'sample') |> 
+      mutate(distinct = ifelse(duplicated(sample), 'All', distinct)) |> 
+      select(-sample) |> 
+      group_nest(distinct) |> 
+      mutate(nSample = map_dbl(data, nrow), 
+             prediction = map(data, ~ as_prediction_surv(as.data.table(.x))), 
+             cindex = map_dbl(prediction, ~ .x$score(msr('surv.cindex')))) |> 
+      arrange(-nSample) |> 
+      mutate(distinct = factor(distinct, levels = distinct), alpha = nSample/max(nSample))
+    
+    plotCindex = eachDataset |> 
+      ggplot() +
+      geom_col(aes(distinct, cindex, fill = distinct, alpha = alpha)) +
+      scale_fill_manual(values = c("#E45D61", "#F19294", "#F5B375", "#A5D38F", '#4A9D47', "#67A59B", "#96C3D8", "#5F9BBE"), guide = 'none') +
+      labs(title = 'Stacked Prediction Efficiency', alpha = 'Proportion') +
+      ylim(c(0, 1)) +
+      xlab('') +
+      ylab('Harrell’s Concordance Index') +
+      theme_classic() + 
+      theme(
+        legend.position = 'top', 
+        axis.text.x = element_text(angle = 30,vjust = 0.85,hjust = 0.75)
+      )
+    
+    #### km ----
+    
+    lstResult = list()
+    for (i in seq_along(eachDataset$distinct)) {
+      
+      dataPlotPre = eachDataset$data[[i]]
+      
+      cutPoint = surv_cutpoint(dataPlotPre, time = "time", event = "status", variables = 'crank')
+      dataPlotPre$group = ifelse(dataPlotPre$crank > cutPoint$cutpoint[[1]], "H", "L")
+      
+      dataHR = survdiff(Surv(event = status, time = time) ~ group, data = dataPlotPre)
+      HR = signif((dataHR$obs[1]/dataHR$exp[1])/(dataHR$obs[2]/dataHR$exp[2]), 3); if (is.infinite(HR)) HR = 10.0
+      pValue = signif(1 - pchisq(dataHR$chisq, length(dataHR$n) - 1), 3)
+      
+      fitSurv = survfit(Surv(event = status, time = time) ~ group, data = dataPlotPre)
+      
+      lstPlot = ggsurvplot(fitSurv, data = dataPlotPre)
+      
+      statistic = paste0("H : L = ", paste(table(dataPlotPre$group), collapse = ":"), "\n", "Hazard Ratio = ", HR, "\nLog-Rank Pvalue = ", pValue)
+      lstResult[[as.character(eachDataset$distinct[i])]] = lstPlot$plot +
+        scale_color_manual(values = c(`group=H` = "#F08080", `group=L` = "#4169E1"), guide = 'none') +
+        labs(title = eachDataset$distinct[i], color = "Risk Type") +
+        annotate("text", label = statistic, x = 0, y = 0, hjust = 0, vjust = 0.1) + 
+        theme(
+          legend.position = "top"
+        )
+      
+    }
+    
+    plotKm = plot_grid(plotlist = lstResult, align = "h", nrow = 4)
+    
+    ### summary ----
+    
+    resPlotIndicator = plot_grid(plotCindex, plotKm, nrow = 2, rel_heights = c(1, 3))
+    resPlotGene = plot_grid(plotlist = list(plotGI, plotCoef, plotEnrich), align = "v", ncol = 1, rel_heights = c(3, 1.5, 1.5))
+    
+    return(list(resPlotIndicator, resPlotGene))
+    
+  })
+  
+  observeEvent(input$show_model_update, {
+    shinyjs::show(id = "show_model_result")
+    
+    show_model_result_modelinfos_plots = show_model_result_modelinfos()
+    
+    output$show_model_result_modelinfos_indicator = output$show_model_result_summarise_plot = renderPlot(
+      {
+        plot(show_model_result_modelinfos_plots[[1]])
+      },
+      height = 1000,
+      width = 600
+    )
+    
+    output$show_model_result_modelinfos_features = output$show_model_result_summarise_plot = renderPlot(
+      {
+        plot(show_model_result_modelinfos_plots[[2]])
+      },
+      height = 1000,
+      width = 600
+    )
+    
+  })
+  
+  # predict ----
+  
+  shinyjs::hide(id = "predict_RFS_result")
+  
+  observe({
+    toggleState(id ="predict_RFS_update",
+                condition = !is.null(input$predict_RFS_file))
+  })
+  
+  EPm_test = reactiveValues(intermediate = NULL)
+  
+  ## predict-prediction ----
+  
+  predict_RFS_result_prediction = eventReactive(input$predict_RFS_update, {
+    
+    netInput_ = read_csv(file.path('material', 'predict', 'model', input$predict_RFS_bgNet, 'background.network.csv'))
+    learnerLst_ = readRDS(file.path('material', 'predict', 'model', input$predict_RFS_bgNet, input$predict_RFS_normal, paste0('learner_', input$predict_RFS_model, '.Rds')))
+    
+    if (input$predict_RFS_simplify == 'yes') {
+      
+      netInput_  = netInput_ |> filter(id %in% learnerLst_$fea)
+      
+    }
+    
+    if (!is.null(input$predict_RFS_mask)) {
+      
+      matsMask_ = input$predict_RFS_mask$datapath |> 
+        lapply(fread)
+      
+    } else {
+      
+      matsMask_ = list()
+      
+    }
+    
+    file_ = fread(input$predict_RFS_file$datapath) |> 
+      mutate(across(-1, scale))
+    
+    EPm_test_ = calEPm(file_, input$predict_RFS_normal, netInput_, 1, matsMask_) 
+    
+    preRes_ = calRS(EPm_test_, learnerLst_, input$predict_RFS_normal, netInput_)
+    
+    return(list(preRes_, EPm_test_))
+    
+  })
+
+  
+  observeEvent(input$predict_RFS_update, {
+    shinyjs::show(id = "predict_RFS_result")
+    
+    predict_RFS_result_prediction_RT = predict_RFS_result_prediction()
+    
+    EPm_test$intermediate = predict_RFS_result_prediction_RT[[2]]
+    
+    output$predict_RFS_result_prediction_datatable = renderUI({
+      DT::datatable(
+        predict_RFS_result_prediction_RT[[1]],
+        rownames = F,
+        caption = htmltools::tags$caption(
+          style = "font-size:14px",
+          htmltools::em(paste("Table: Prediction", sep = " "))
+        ),
+        options = list(
+          dom = "frtip",
+          columnDefs =
+            list(list(
+              className = "dt-center",
+              targets = "_all"
+            )),
+          pageLength = 10,
+          initComplete = JS(
+            "function(settings, json) {",
+            "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
+            "}"
+          )
+        )
+      )
+    })
+    
+  })
+  
+  ## predict-inference ----
+  
+  predict_summarise_plot_table = eventReactive(input$predict_RFS_update, {
+    
+    learnerLst_ = readRDS(file.path('material', 'predict', 'model', input$predict_RFS_bgNet, input$predict_RFS_normal, paste0('learner_', input$predict_RFS_model, '.Rds')))
+    EPm_cancer = readRDS(file.path('material/predict/cancer', input$predict_RFS_bgNet, 'cancerData.Rds'))
+    
+    # file_ = fread(input$predict_RFS_file$datapath)
+    # netInput_ = read_csv(file.path('material', 'predict', 'model', input$predict_RFS_bgNet, 'background.network.csv'))
+    # netInput_  = netInput_ |> filter(id %in% learnerLst_$fea)
+    
+    EPm_train_ = EPm_cancer[, c('sample', learnerLst_$fea)] |> column_to_rownames('sample') |> as.matrix()
+    
+    if (is.null(EPm_test$intermediate)) {
+      EPm_test_ = calEPm(file_, input$predict_RFS_normal, netInput_, input$num_thread) |> column_to_rownames('sample') |> as.matrix(); EPm_test_ = EPm_test_[, colnames(EPm_train_)]
+    } else {
+      EPm_test_ = EPm_test$intermediate |> column_to_rownames('sample') |> as.matrix(); EPm_test_ = EPm_test_[, colnames(EPm_train_)]
+    }
+    
+    ### dist ----
+    
+    matCentroidTrain = matrix(rep(apply(EPm_train_, 2, mean), nrow(EPm_train_)), ncol = nrow(EPm_train_)) |> t()
+    distCentroidTrain = (EPm_train_ - matCentroidTrain)**2 |> 
+      apply(1, \(vec_) sqrt(sum(vec_))) |> 
+      mean()
+    
+    matCentroidTest = matrix(rep(apply(EPm_train_, 2, mean), nrow(EPm_test_)), ncol = nrow(EPm_test_)) |> t()
+    dataPlotOODDist = (EPm_test_ - matCentroidTest)**2 |> 
+      apply(1, \(vec_) sqrt(sum(vec_))) |> 
+      as.data.frame() |> 
+      rownames_to_column('sample') |> 
+      set_names(c('sample', 'dist'))
+    
+    plotOODDist = dataPlotOODDist |> 
+      ggplot(aes(x = dist)) +
+      # geom_histogram(fill = '#394c81', alpha = 0.5, bins = 100) +
+      geom_density(fill = '#94697a', alpha = 0.5) +
+      geom_vline(aes(xintercept=distCentroidTrain), linetype = "dashed", linewidth = 1) +
+      labs(title = 'Distance to the centroid of training data') +
+      theme_classic()
+
+    ### cor ----
+    
+    dataPlotOODCor = cor(t(EPm_train_), t(EPm_test_)) 
+    
+    #### cor-mean ----
+    
+    dataPlotOODCorMean = dataPlotOODCor |> 
+      apply(2, \(vec_) sort(vec_, decreasing = T)[1:10]) |> 
+      apply(2, mean) |> 
+      as.data.frame() |> 
+      rownames_to_column('sample') |> 
+      set_names(c('sample', 'top10CorMean'))
+    
+    plotOODCorMean = dataPlotOODCorMean |> 
+      ggplot(aes(top10CorMean)) +
+      geom_histogram(fill = '#394c81', alpha = 0.5, bins = 100) +
+      labs(title = 'Average Top10 correlation in this run') +
+      theme_classic()
+    
+    #### cor-top ----
+    
+    dataPlotOODCorTop = dataPlotOODCor |> 
+      as_tibble(rownames = 'trainSample') |> 
+      pivot_longer(-trainSample, names_to = 'testSample', values_to = 'cor') |> 
+      group_by(testSample) |> 
+      slice_max(cor, n = 10, with_ties = F)
+    
+    plotOODCorTop = dataPlotOODCorTop |> 
+      group_by(trainSample) |> 
+      summarise(n = n()) |> 
+      slice_max(n, n = 20, with_ties = F) |> 
+      ggplot(aes(trainSample, n)) +
+      geom_col(fill = '#d1897e') +
+      labs(title = 'Top twenty training samples referred most in this run') +
+      theme_classic() +
+      theme(
+        axis.text.x = element_text(angle = 30,vjust = 0.85,hjust = 0.75)
+      )
+    
+    ### summary ----
+    
+    badSampleDist = dataPlotOODDist |> 
+      slice_max(dist, prop = 0.2) |> 
+      pull(sample)
+    goodSampleDist = dataPlotOODDist |> 
+      slice_min(dist, prop = 0.2) |> 
+      pull(sample)
+    
+    badSampleCor = dataPlotOODCorMean |> 
+      slice_min(top10CorMean, prop = 0.2) |> 
+      pull(sample)
+    goodSampleCor = dataPlotOODCorMean |> 
+      slice_max(top10CorMean, prop = 0.2) |> 
+      pull(sample)
+    
+    badSample = intersect(badSampleDist, badSampleCor)
+    goodSample = intersect(goodSampleDist, goodSampleCor)
+    
+    resTable_ = tibble(
+      sample = c(goodSample, badSample), 
+      quality = rep(c('High', 'low'), c(length(goodSample), length(badSample)))
+    )
+    
+    resPlot = plotOODDist / plotOODCorMean / plotOODCorTop
+    return(list(resPlot, resTable_))
+    
+  })
+  
+  observeEvent(input$predict_RFS_update, {
+    shinyjs::show(id = "predict_RFS_result")
+    
+    plot_table = predict_summarise_plot_table()
+    
+    output$predict_RFS_result_summarise_plot = renderPlot(
+      {
+        plot(plot_table[[1]])
+      },
+      height = 400,
+      width = 600
+    )
+    
+    output$predict_RFS_result_summarise_datatable = renderUI({
+      DT::datatable(
+        plot_table[[2]],
+        rownames = F,
+        options = list(
+          dom = "frtip",
+          columnDefs =
+            list(list(
+              className = "dt-center",
+              targets = "_all"
+            )),
+          pageLength = 7,
+          initComplete = JS(
+            "function(settings, json) {",
+            "$(this.api().table().header()).css({'background-color': '#000', 'color': '#fff'});",
+            "}"
+          )
+        )
+      )
+    })
+    
+  })
+  
+}

@@ -1,0 +1,295 @@
+
+# config ------------------------------------------------------------------
+
+library(shiny)
+library(shinyBS)
+library(shinyWidgets)
+library(shinycssloaders)
+library(shinydashboard)
+library(shinyFeedback)
+library(shinyjs)
+library(DT)
+library(waiter)
+library(slickR)
+
+library(magick)
+library(tidyverse)
+library(mlr3verse)
+library(mlr3proba)
+library(data.table)
+
+library(tidygraph)
+library(ggraph)
+
+library(survival)
+library(survminer)
+
+library(cowplot)
+library(patchwork)
+
+# geneInteraction ---------------------------------------------------------
+
+
+rank.matrix = function(x) {
+  rankmatrix = c()
+  for (i in 1: ncol(x)){
+    temp = rank(x[, i])
+    rankmatrix = cbind(rankmatrix, temp)
+  }
+  colnames(rankmatrix) = colnames(x)
+  row.names(rankmatrix) = row.names(x)
+  return(rankmatrix)
+}	
+
+is.NullOb = function(x) is.null(x) | all(sapply(x, is.null))
+
+rmNullObs = function(x) {
+  x = Filter(Negate(is.NullOb), x)
+  lapply(x, function(x) if (is.list(x)) rmNullObs(x) else x)
+}
+
+delta.rank = function(net, x, n_normal, n_cancer) {
+  deltarank = future.apply::future_lapply(
+    1:nrow(net),
+    function(i) {
+      r1 = which(row.names(x) == net[[1]][i])
+      r2 = which(row.names(x) == net[[2]][i])
+      if((length(r1)!= 0) & (length(r2)!= 0)){
+        r = x[r1, ] - x[r2, ]
+        list(as.matrix(net[i,]), r)
+      }
+    }
+  )
+  
+  genePair = do.call(rbind, sapply(deltarank, '[', 1))
+  rankValue = do.call(rbind, sapply(deltarank, '[', 2))
+  
+  net.edge = genePair
+  net.data = matrix(unlist(rankValue[, n_normal + 1]), ncol=1)
+  deltarank_normal = matrix(unlist(rankValue[, 1:n_normal]), ncol = n_normal)
+  deltarank_cancer = matrix(unlist(rankValue[, (n_normal+2):ncol(rankValue)]), ncol=n_cancer)
+  colnames(deltarank_normal) = colnames(x)[1:n_normal]
+  colnames(deltarank_cancer) = colnames(x)[(n_normal+2):ncol(x)]
+  return(list(net.edge, net.data, deltarank_normal, deltarank_cancer))
+}
+
+EPm = function(net.data, deltarank, n = 1){
+  EPm = c()
+  EPm = sapply(
+    1: ncol(deltarank), 
+    function(i) {
+      delta = deltarank[, i] - net.data
+      EPm = cbind(EPm, delta)
+    }
+  )
+  colnames(EPm) = colnames(deltarank)
+  return(EPm/n)
+}
+
+# browse ------------------------------------------------------------------
+
+## graph ----
+
+enrichGraphInner = function(inputGenes_, geneSet_, bgNet_, bgGeneNum_) {
+  
+  geneEnriched_ = intersect(geneSet_, inputGenes_)
+  
+  if (length(geneEnriched_) == 0) return(c(ES = 0, p = 1))
+  
+  inputNet_ = bgNet_ |> 
+    filter(from %in% inputGenes_ & to %in% inputGenes_)
+  pathwayNet_ = bgNet_ |> 
+    filter(from %in% geneSet_ & to %in% geneSet_)
+  disturbedNet_ = bgNet_ |> 
+    filter(from %in% geneEnriched_ & to %in% geneEnriched_)
+  
+  ES_ = length(geneEnriched_)*nrow(disturbedNet_)/nrow(pathwayNet_); if (is.infinite(ES_)) ES_ = NA
+  pHyper_ = phyper(nrow(disturbedNet_)-1, nrow(pathwayNet_), nrow(bgNet_)-nrow(pathwayNet_), nrow(inputNet_), lower.tail = F)
+  
+  return(c(ES = ES_, p = pHyper_))
+  
+}
+
+enrichGraph = function(inputGenes_, db_, pathways_ = 'all', bgNet_, thres_ = 0.05) {
+  
+  colnames(bgNet_)[1:2] = c('from', 'to')
+  if (pathways_ == 'all') pathways_ = db_$term |> unique()
+  
+  bgGeneNum_ = length(unique(c(bgNet_$from, bgNet_$to)))
+  
+  terms_ = db_ |> filter(term %in% pathways_); terms_ = split(terms_$gene, terms_$term)
+  
+  resultLst_ = lapply(terms_, enrichGraphInner, inputGenes_ = inputGenes_, bgNet_ = bgNet_, bgGeneNum_ = bgGeneNum_) 
+  
+  result_ = do.call(rbind, resultLst_) |> 
+    as_tibble() |> 
+    mutate(pathway = names(terms_)) |> 
+    filter(ES != 0) |> 
+    mutate(p.adj = p.adjust(p), q = p.adjust(p, "fdr")) |> 
+    relocate(pathway, ES) |> 
+    filter(q <= thres_)
+  
+  return(result_)
+  
+}
+
+pToLabel = function(vec__) {
+  vec__[is.na(vec__)] = 1
+  cut(
+    vec__,
+    breaks = c(-Inf, 0.001, 0.01, 0.05, Inf),
+    labels = c("FDR<0.001", "FDR<0.01", "FDR<0.05", "FDR>0.05") 
+  )
+}
+
+splitTerms = function(Des__) {
+  
+  DesVec__ = str_split(Des__, " ", simplify = F)[[1]]
+  cutPoint__ = ceiling(length(DesVec__)/2)
+  
+  DesVec1__ = DesVec__[1:cutPoint__]; DesVec2__ = DesVec__[(cutPoint__+1):length(DesVec__)]
+  DesVec__ = c(paste(DesVec1__, collapse = " "), paste(DesVec2__, collapse = " "))
+  
+  if(nchar(DesVec__[1]) > nchar(DesVec__[2])) {
+    DesVec__ = str_pad(DesVec__, nchar(DesVec__[1]), 'both')
+  } else {
+    DesVec__ = str_pad(DesVec__, nchar(DesVec__[2]), 'both')
+  }
+  
+  return(paste(DesVec__, collapse = '\n'))
+  
+}
+
+read_gmt = function(gmtfile_, filteron_ = NULL) {
+  
+  x <- readLines(gmtfile_)
+  res <- strsplit(x, "\t")
+  names(res) <- vapply(res, function(y) y[1], character(1))
+  res <- lapply(res, "[", -c(1:2))
+  ont2gene <- stack(res)
+  ont2gene <- ont2gene[, c("ind", "values")]
+  colnames(ont2gene) <- c("term", "gene")
+  
+  if (!is.null(filteron_)) ont2gene = ont2gene |> filter(str_detect(term, filteron_))
+  
+  return(as_tibble(ont2gene))
+  
+}
+
+# predict -----------------------------------------------------------------
+
+
+calEPm = function(matInput_ = '', bgNormal_ = 'TCGA', netInput_, nThreads_ = 4, matsMask_ = list()) {
+  
+  colnames(matInput_)[1] = 'symbol'
+  
+  trainFeas_ = unique(c(netInput_$X1, netInput_$X2))
+  diffGenes_ = setdiff(trainFeas_, matInput_$symbol)
+  mapRatio_ = 1-length(diffGenes_)/length(trainFeas_)
+  
+  if (mapRatio_ != 1) {
+    
+    diffDf_ = matrix(rep(0, length(diffGenes_)*(ncol(matInput_)-1)), nrow = length(diffGenes_)) |> 
+      as.data.frame()
+    rownames(diffDf_) = diffGenes_
+    colnames(diffDf_) = colnames(matInput_)[-1]
+    
+    cancerData_ = matInput_ |> 
+      as.data.frame() |> 
+      filter(symbol %in% trainFeas_) |> 
+      distinct(symbol, .keep_all = T) |> 
+      column_to_rownames('symbol') |> 
+      rbind(diffDf_)
+    
+  } else {
+    
+    cancerData_ = matInput_ |> 
+      as.data.frame() |> 
+      filter(symbol %in% trainFeas_) |> 
+      distinct(symbol, .keep_all = T) |> 
+      column_to_rownames('symbol')
+    
+  }
+  
+  cancerData_ = as.matrix(cancerData_[trainFeas_, ])
+  normalData_ = readRDS(file.path('material', 'predict', 'normal', bgNormal_, 'normalData.Rds'))[trainFeas_, ]
+  
+  if (length(matsMask_) != 0) {
+    
+    matsMask_ = matsMask_ |> 
+      lapply(
+        \(df__) {
+          colnames(df__)[1] = 'symbol'
+          df__ |> 
+            as.data.frame() |> 
+            filter(symbol %in% trainFeas_) |> 
+            distinct(symbol, .keep_all = T) |> 
+            column_to_rownames('symbol') |> 
+            as.matrix()
+        }
+      )
+    
+    if (length(matsMask_) == 1) {
+      matMask_ = matsMask_[[1]]
+    } else {
+      matMask_ = Reduce(`+`, matsMask_); matsMask_ = matsMask_[trainFeas_, ]
+    }
+    cancerData_[matMask_ == 0] = min(cancerData_)
+    
+  }
+  
+  normalDataWithMean_ = cbind(normalData_, apply(normalData_, 1, mean))
+  
+  rankNormal_ = rank.matrix(normalDataWithMean_)
+  rankCancer_ = rank.matrix(cancerData_)
+  
+  rankAll_ = cbind(rankNormal_, rankCancer_)
+  
+  nNormal_ = ncol(normalData_)
+  nCancer_ = ncol(cancerData_)
+  
+  future::plan('multisession', workers = as.numeric(nThreads_))
+  deltarankResult_ = delta.rank(netInput_, rankAll_, nNormal_, nCancer_)
+  future::plan('sequential')
+  
+  EPm_cancer_ = EPm(deltarankResult_[[2]], deltarankResult_[[4]], nrow(cancerData_)) |> t() |> as_tibble(rownames = "sample")
+  colnames(EPm_cancer_)[-1] = deltarankResult_[[1]][, 3]
+  
+  return(EPm_cancer_)
+  
+}
+
+calRS = function(Epm_input_, learnerLst_, bgNormal_ = 'TCGA', netInput_) {
+  
+  samplesModel_ = Epm_input_$sample
+  dataTask_ = Epm_input_ |> mutate(DFI = 0, DFI_time = 0) |> select(-sample)
+  
+  taskTest  = as_task_surv(dataTask_, time = "DFI_time", event = "DFI")
+  
+  if (!is.null(learnerLst_$process)) {
+    taskTestProcessed = learnerLst_$process$predict(list(taskTest))[[1]]
+  } else {
+    taskTestProcessed = taskTest
+  }
+  
+  preTest_  = learnerLst_$learner$predict(taskTestProcessed)
+  preTest_ |> 
+    as.data.table() |> 
+    mutate(sample = samplesModel_[row_ids]) |> 
+    select(-time, -status) |> 
+    rename_with(~ str_replace_all(.x, '.1', ''), contains(".1")) |> 
+    select(row_ids, sample, crank, lp)
+  
+}
+
+calEPmAndRS = function(matInput_, learnerLst_, bgNormal_ = 'TCGA', netInput_, nThreads_ = 1) {
+  
+  Epm_input_ = calEPm(matInput_, bgNormal_, netInput_, nThreads_)
+  
+  preResDenovo_ = calRS(Epm_input_, learnerLst_, bgNormal_, netInput_)
+  
+  return(preResDenovo_)
+  
+}
+
+
