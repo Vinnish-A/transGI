@@ -1,3 +1,29 @@
+#' transGI
+#'
+#' Nonparametric transformation method of transcriptome based on prior gene interactions
+#'
+#' @param testMat_ Expression matrix, which is expected to have Gene Symbol represented by rownames and samples represented by colnames.
+#' @param method_ Transformation method, currently consisting of either DeltaRank or Pairwise.
+#' For detailed information, please refer to \code{\link{delta.rank}} or \code{\link{pair.wise}}.
+#' @param bgNet_ Background network type. Currently, prior gene-gene interactions from Reactome and STRING databases are included.
+#' You can specify to use either 'reactome' or 'string' by passing the respective argument.
+#' If you wish to use custom gene-gene interaction pairs, please pass a dataframe containing two columns of genes.
+#' @param nThreads_ Threads to use for transformations, the recommended number of  is between 3 and 6.
+#' @param maskMat_ A binary matrix, with the same dimension as \code{testMat_}, is integrated-term-by-term with \code{testMat_},
+#' which means that the values of the corresponding positions in \code{testMat_} are penalized to the minimum value for function-based integration.
+#' @param controlMat_ Expression matrix with the same dimensions as \code{testMat_}, usually normal tissue.
+#' The mean value of expression in the matrix and the corresponding transformation result are subtracted from the final result
+#' as the level of gene expression perturbation in the control group.
+#'
+#' @importFrom future plan
+#'
+#' @export
+#'
+#' @examples
+#' testMat_ = system.file('extdata', 'inputMatTest.csv', package = 'transGI') |>
+#'   read.csv(row.names = 'symbol') |>
+#'   as.matrix()
+#' result = transGI(testMat_, 'deltarank', 'reactome')
 transGI = function(testMat_, method_ = 'deltarank', bgNet_ = 'reactome', nThreads_ = 1, maskMat_ = NULL, controlMat_ = NULL) {
 
   match.arg(method_, c('deltarank', 'pairwise'))
@@ -10,7 +36,7 @@ transGI = function(testMat_, method_ = 'deltarank', bgNet_ = 'reactome', nThread
 
   if (nrow(bgNet_) == 0) stop('pity')
 
-  if (length(matsMask_) != 0) testMat_[matMask_ == 1] = min(testMat_)
+  if (length(maskMat_) != 0) testMat_[matMask_ == 1] = min(testMat_)
 
   future::plan('multisession', workers = nThreads_)
   res_ = switch(

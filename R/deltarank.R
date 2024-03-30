@@ -1,3 +1,10 @@
+#' rank.matrix
+#'
+#' Used to convert the expression matrix to the rank matrix of the expression
+#'
+#' @param mat_ Expression matrix, which is expected to have Gene Symbol represented by rownames and samples represented by colnames.
+#'
+#' @keywords internal
 rank.matrix = function(mat_) {
 
   rankmatrix = c()
@@ -12,6 +19,17 @@ rank.matrix = function(mat_) {
 
 }
 
+#' delta.rank
+#'
+#' Used to convert the expression matrix to rank matrix first, and then calculate deltarank according to prior gene pairs
+#'
+#' @param mat_ Expression matrix, which is expected to have Gene Symbol represented by rownames and samples represented by colnames.
+#' @param net_ Background network
+#' @param nThreads_ Threads to use for transformations, the recommended number of  is between 3 and 6.
+#'
+#' @importFrom future.apply future_lapply
+#'
+#' @keywords internal
 delta.rank = function(mat_, net_, nThreads_ = 1) {
 
   mat_ = rank.matrix(mat_)

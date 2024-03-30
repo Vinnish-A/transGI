@@ -1,3 +1,14 @@
+#' pair.wise
+#'
+#' Used to output a binary matrix according to the expression level of the prior gene pairs
+#'
+#' @param mat_ Expression matrix, which is expected to have Gene Symbol represented by rownames and samples represented by colnames.
+#' @param net_ Background network
+#' @param nThreads_ Threads to use for transformations, the recommended number of  is between 3 and 6.
+#'
+#' @importFrom future.apply future_lapply
+#'
+#' @keywords internal
 pair.wise = function(mat_, net_, nThreads_ = 1) {
 
   calculator_ = function(i__) {
