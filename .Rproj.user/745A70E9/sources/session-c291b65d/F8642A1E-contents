@@ -1,0 +1,59 @@
+---
+output: github_document
+---
+
+<!-- README.md is generated from README.Rmd. Please edit that file -->
+
+```{r, include=FALSE}
+knitr::knit_hooks$set(pngquant = knitr::hook_pngquant)
+
+knitr::opts_chunk$set(
+  echo = T,
+  message = FALSE, 
+  fig.path = "man/figures/README-",
+  collapse = TRUE,
+  comment = "#>",
+  dev = "ragg_png",
+  dpi = 72,
+  fig.retina = 2,
+  fig.width = 10.6667,
+  fig.height = 3.3334,
+  fig.align = "center",
+  out.width = "100%",
+  pngquant = "--speed=1 --quality=50"
+)
+```
+
+# ggmonika
+
+<!-- badges: start -->
+<!-- badges: end -->
+
+The goal of ggmonika is to provide color schemes for research papers for ddlc enthusiasts.
+
+## Installation
+
+You can install the development version of ggmonika like so:
+
+``` r
+remotes::install_github('vinnish-A/ggmonika')
+```
+
+## Example
+
+This is a basic example which shows you how to solve a common problem:
+
+```{r example, warning=FALSE}
+library(ggplot2)
+library(ggmonika)
+
+iris |> 
+  ggplot(aes(Sepal.Length, Sepal.Width, color = Species)) +
+  geom_point() +
+  scale_color_monika()
+
+iris |> 
+  ggplot(aes(Sepal.Length, Sepal.Width, fill = Species)) +
+  geom_point(shape = 21) +
+  scale_fill_monika()
+```
