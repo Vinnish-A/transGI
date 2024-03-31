@@ -1,5 +1,5 @@
 
-# transGI: Nonparametric transformation method of transcriptome based on prior gene interactions
+# transGI: Nonparametric transformation method of transcriptome based on prior gene interactions <img src="man/figures/transGI.png" align="right" width="120" />
 
 The interaction between genes can be represented as a scale-free
 directed network. A common practice is to infer the strength of signals
