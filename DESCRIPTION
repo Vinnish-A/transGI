@@ -1,12 +1,23 @@
 Package: transGI
 Type: Package
-Title: What the Package Does (Title Case)
+Title: Nonparametric transformation method of transcriptome based on prior gene interactions
 Version: 0.1.0
-Author: Who wrote it
-Maintainer: The package maintainer <yourself@somewhere.net>
-Description: More about what it does (maybe more than one line)
-    Use four spaces when indenting paragraphs within the Description.
-License: What license is it under?
+Date: 2024-03-29
+Authors@R: c(
+    person("Zhihao", "Xu", email = "zhihao_xu_a@163.com", role = c("aut", "cre"), comment = c(ORCID = "0000-0003-1312-8428")), 
+    person("Ning", "Zhang", email = "ningzhangbox@163.com", role = "ctb"), 
+    person("MITUS", role = "fnd")
+    )
+Maintainer: Zhihao Xu <zhihao_xu_a@163.com>
+Description: The interaction between genes can be represented as a scale-free directed network. 
+  A common practice is to infer the strength of signals for genes and their downstream functions based on gene expression levels. 
+  Although this approach is simple, it does not consider prior information on gene-gene interactions. 
+  To incorporate prior information on gene interactions into the model, a non-parametric transformation of transcript expression is a worthwhile consideration. 
+  transGI has compiled several methods and pairs of gene interactions from previously published literature, 
+  allowing users to quantitatively construct gene interaction networks de novo.
+License: GPL (>= 3)
+URL: https://github.com/Vinnish-A/transGI
+BugReports: https://github.com/Vinnish-A/transGI/issues
 Encoding: UTF-8
 LazyData: true
 RoxygenNote: 7.2.3

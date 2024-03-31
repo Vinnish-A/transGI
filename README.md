@@ -54,4 +54,83 @@ devtools::install_github("Vinnish-A/transGI")
 
 ## Example
 
+Use the `transGI` function to transform transcriptome data.
+
+``` r
+library(transGI)
+
+testMat = system.file('extdata', 'inputMatTest.csv', package = 'transGI') |>
+  read.csv(row.names = 'symbol') |>
+  as.matrix() |> 
+  _[1:2000, ]
+res = transGI(testMat, 'deltarank', 'reactome', nThreads_ = 4)
+```
+
+Use `enrichGraph` to calculate the enrichment results of genes in the
+background gene interaction network.
+
+``` r
+symbols = readLines('material/symbols.csv')
+
+db = read_gmt('material/h.all.v2023.2.Hs.symbols.gmt')
+res_enrich = enrichGraph(symbols, db_ = db, pathways_ = 'all', bgNet_ = 'reactome')
+
+autoBar(res_enrich)
+```
+
+<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" style="display: block; margin: auto;" />
+
 ## Future Plan
+
+Currently, transGI has implemented a series of functions including
+feature engineering, feature selection, gene enrichment, and simple
+visualization. In the future, we plan to add the following features to
+transGI:
+
+1.  Infer new potential gene pairs for interaction based on perturbation
+    effects in experimental and control groups
+2.  For networks of interactions between two or more genes, add
+    functions such as network comparison and key node selection
+3.  Add more methods for constructing single-sample interaction networks
+    and calculating perturbation effects.
+
+## Citation
+
+The calculation method for deltarank is obtained from (Chen et al.
+2020), and the pairwise calculation method is obtained from (Zhu et al.
+2022)
+
+If you use transGI in your research, please cite:
+
+    @Manual{,
+      title = {transGI: Nonparametric transformation method of transcriptome based on prior gene interactions},
+      author = {Zhihao Xu},
+      year = {2024},
+      note = {R package version 0.1.0},
+      url = {https://github.com/Vinnish-A/transGI},
+    }
+
+## reference
+
+<div id="refs" class="references csl-bib-body hanging-indent">
+
+<div id="ref-10.1093/bib/bbaa268" class="csl-entry">
+
+Chen, Yuanyuan, Yu Gu, Zixi Hu, and Xiao Sun. 2020.
+“<span class="nocase">Sample-specific perturbation of gene interactions
+identifies breast cancer subtypes</span>.” *Briefings in Bioinformatics*
+22 (4): bbaa268. <https://doi.org/10.1093/bib/bbaa268>.
+
+</div>
+
+<div id="ref-10.1093/bib/bbac344" class="csl-entry">
+
+Zhu, Sujie, Weikaixin Kong, Jie Zhu, Liting Huang, Shixin Wang, Suzhen
+Bi, and Zhengwei Xie. 2022. “<span class="nocase">The genetic
+algorithm-aided three-stage ensemble learning method identified a robust
+survival risk score in patients with glioma</span>.” *Briefings in
+Bioinformatics* 23 (5): bbac344. <https://doi.org/10.1093/bib/bbac344>.
+
+</div>
+
+</div>

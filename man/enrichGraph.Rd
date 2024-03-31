@@ -29,6 +29,6 @@ If you wish to use custom gene-gene interaction pairs, please pass a dataframe c
 enrichGraph
 }
 \examples{
-db = read_gmt('yourpath/h.all.v2023.2.Hs.symbols.gmt')
+db = read_gmt('material/h.all.v2023.2.Hs.symbols.gmt')
 result = enrichGraph(geneString, db, 'all')
 }

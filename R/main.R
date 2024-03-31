@@ -20,10 +20,10 @@
 #' @export
 #'
 #' @examples
-#' testMat_ = system.file('extdata', 'inputMatTest.csv', package = 'transGI') |>
+#' testMat = system.file('extdata', 'inputMatTest.csv', package = 'transGI') |>
 #'   read.csv(row.names = 'symbol') |>
 #'   as.matrix()
-#' result = transGI(testMat_, 'deltarank', 'reactome')
+#' result = transGI(testMat, 'deltarank', 'reactome')
 transGI = function(testMat_, method_ = 'deltarank', bgNet_ = 'reactome', nThreads_ = 1, maskMat_ = NULL, controlMat_ = NULL) {
 
   match.arg(method_, c('deltarank', 'pairwise'))

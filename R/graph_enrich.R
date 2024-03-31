@@ -65,7 +65,7 @@ enrichGraphInner = function(inputGenes_, geneSet_, bgNet_, bgGeneNum_) {
 #' @export
 #'
 #' @examples
-#' db = read_gmt('yourpath/h.all.v2023.2.Hs.symbols.gmt')
+#' db = read_gmt('material/h.all.v2023.2.Hs.symbols.gmt')
 #' result = enrichGraph(geneString, db, 'all')
 enrichGraph = function(inputGenes_, db_, pathways_ = 'all', bgNet_ = 'reactome', thres_ = 0.05) {
 
