@@ -37,6 +37,27 @@ splitTerms = function(Des__) {
 
 }
 
+#' net2gene
+#'
+#' @param genepair_ Genepair with id
+#' @param idNet_ Selected genepair ids
+#'
+#' @importFrom dplyr filter pull
+#'
+#' @export
+net2gene = function(genepair_, idNet_) {
+
+  colnames(genepair_)[1:3] = c('from', 'to', 'id')
+
+  genes_ = genepair_ |>
+    filter(id %in% idNet_) |>
+    pull(from, to)
+
+  result_ = unique(c(genes_, names(genes_)))
+
+  return(result_)
+
+}
 
 #' autoBar
 #'
@@ -148,8 +169,7 @@ visNet = function(inputGenes_, bgNet_ = 'reactome', degree_ = 3) {
     geom_node_label(aes(filter = deg > degree_, label = name), size = 3, repel = T, max.overlaps = Inf) +
     scale_color_discrete() +
     scale_edge_width(range=c(0.2,3)) +
-    guides(size = F, fill = F) +
+    guides(size = 'none', fill = 'none') +
     theme_graph()
-
 
 }

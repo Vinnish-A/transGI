@@ -59,11 +59,22 @@ Use the `transGI` function to transform transcriptome data.
 ``` r
 library(transGI)
 
-testMat = system.file('extdata', 'inputMatTest.csv', package = 'transGI') |>
+testMat = system.file('extdata', 'testMat.csv', package = 'transGI') |>
   read.csv(row.names = 'symbol') |>
   as.matrix() |> 
   _[1:2000, ]
 res = transGI(testMat, 'deltarank', 'reactome', nThreads_ = 4)
+```
+
+Use `cal_HR` and a series of evaluation function to select features.
+Execute `selector` to get existing methods.
+
+``` r
+testPhen = system.file('extdata', 'testPhen.csv', package = 'transGI') |>
+  read.csv(row.names = 'sample')
+
+res_eval = sapply(res$converted, cal_HR, time_ = testPhen$time, event_ = testPhen$event) |> t()
+symbols = net2gene(res$genepair, rownames(res_eval)[res_eval[, 'p'] < 0.05])
 ```
 
 Use `enrichGraph` to calculate the enrichment results of genes in the
@@ -71,23 +82,21 @@ background gene interaction network, while `autoBar` and `autoBubble`
 provides delicate visualization of enrich result.
 
 ``` r
-symbols = readLines('material/symbols.csv')
-
 db = read_gmt('material/h.all.v2023.2.Hs.symbols.gmt')
 res_enrich = enrichGraph(symbols, db_ = db, pathways_ = 'all', bgNet_ = 'reactome')
 
 autoBar(res_enrich)
 ```
 
-<img src="man/figures/README-unnamed-chunk-3-1.png" width="100%" style="display: block; margin: auto;" />
+<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" style="display: block; margin: auto;" />
 
 Use `visNet` to visualize gene interactions.
 
 ``` r
-visNet(symbols, degree_ = 5)
+visNet(symbols, degree_ = 1)
 ```
 
-<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" style="display: block; margin: auto;" />
+<img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" style="display: block; margin: auto;" />
 
 ## Future Plan
 
@@ -100,8 +109,8 @@ transGI:
     effects in experimental and control groups
 2.  For networks of interactions between two or more genes, add
     functions such as network comparison and key node selection
-3.  Add more methods for constructing single-sample interaction networks
-    and calculating perturbation effects.
+3.  Add more methods for constructing or evaluating single-sample
+    interaction networks and calculating perturbation effects.
 
 ## Citation
 

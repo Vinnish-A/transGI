@@ -36,7 +36,7 @@ as the level of gene expression perturbation in the control group.}
 Nonparametric transformation method of transcriptome based on prior gene interactions
 }
 \examples{
-testMat = system.file('extdata', 'inputMatTest.csv', package = 'transGI') |>
+testMat = system.file('extdata', 'testMat.csv', package = 'transGI') |>
   read.csv(row.names = 'symbol') |>
   as.matrix()
 result = transGI(testMat, 'deltarank', 'reactome')
