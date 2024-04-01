@@ -112,3 +112,44 @@ autoBubble = function(df_, n_ = 5) {
 
 }
 
+#' visNet
+#'
+#' @param inputGenes_ A string of genes you want to enrich.
+#' @param bgNet_ Background network type. Currently, prior gene-gene interactions from Reactome and STRING databases are included.
+#' You can specify to use either 'reactome' or 'string' by passing the respective argument.
+#' If you wish to use custom gene-gene interaction pairs, please pass a dataframe containing two columns of genes.
+#' @param degree_ An integer. Label nodes with node degree more than it.
+#'
+#' @import tidygraph
+#' @import ggraph
+#' @importFrom dplyr mutate filter
+#'
+#' @export
+visNet = function(inputGenes_, bgNet_ = 'reactome', degree_ = 3) {
+
+  if (is.character(bgNet_)) {
+    match.arg(bgNet_, c('reactome', 'string'))
+    bgNet_ = system.file("extdata", paste0(bgNet_, '.csv'), package = "transGI") |>
+      read.csv()
+  }
+
+  colnames(bgNet_)[1:2] = c('from', 'to')
+
+  bgNetSig_ = bgNet_ |>
+    filter(from %in% inputGenes_ & to %in% inputGenes_)
+
+  graphGI_ = as_tbl_graph(bgNetSig_) |>
+    activate(nodes) |>
+    mutate(deg = centrality_degree(mode = 'in'))
+
+  ggraph(graphGI_, layout = 'kk') +
+    geom_edge_fan(color = "#394c81", alpha = 0.8, show.legend = FALSE) +
+    geom_node_point(aes(size = deg), shape = 21, fill = '#94697a', color = 'white') +
+    geom_node_label(aes(filter = deg > degree_, label = name), size = 3, repel = T, max.overlaps = Inf) +
+    scale_color_discrete() +
+    scale_edge_width(range=c(0.2,3)) +
+    guides(size = F, fill = F) +
+    theme_graph()
+
+
+}

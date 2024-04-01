@@ -64,7 +64,7 @@ testMat = system.file('extdata', 'inputMatTest.csv', package = 'transGI') |>
 res = transGI(testMat, 'deltarank', 'reactome', nThreads_ = 4)
 ```
 
-Use `enrichGraph` to calculate the enrichment results of genes in the background gene interaction network.
+Use `enrichGraph` to calculate the enrichment results of genes in the background gene interaction network, while `autoBar` and `autoBubble` provides delicate visualization of enrich result. 
 
 ```{r}
 symbols = readLines('material/symbols.csv')
@@ -73,6 +73,12 @@ db = read_gmt('material/h.all.v2023.2.Hs.symbols.gmt')
 res_enrich = enrichGraph(symbols, db_ = db, pathways_ = 'all', bgNet_ = 'reactome')
 
 autoBar(res_enrich)
+```
+
+Use `visNet` to visualize gene interactions.
+
+```{r warning=FALSE}
+visNet(symbols, degree_ = 5)
 ```
 
 ## Future Plan
