@@ -38,13 +38,11 @@ transGI = function(testMat_, method_ = 'deltarank', bgNet_ = 'reactome', nThread
 
   if (length(maskMat_) != 0) testMat_[matMask_ == 1] = min(testMat_)
 
-  future::plan('multisession', workers = nThreads_)
   res_ = switch(
     method_,
     "deltarank" = delta.rank(testMat_, bgNet_, nThreads_),
     "pairwise"  = pair.wise(testMat_, bgNet_, nThreads_)
   )
-  future::plan('sequential')
 
   if (!is.null(controlMat_)) {
 

@@ -20,15 +20,17 @@ pair.wise = function(mat_, net_, nThreads_ = 1) {
   }
 
   if (nThreads_ != 1) {
-    deltarank = future.apply::future_lapply(1:nrow(net_), calculator_)
+    future::plan('multisession', workers = nThreads_)
+    pairwise_ = future.apply::future_lapply(1:nrow(net_), calculator_)
+    future::plan('sequential')
   } else {
-    deltarank = lapply(1:nrow(net_), calculator_)
+    pairwise_ = lapply(1:nrow(net_), calculator_)
   }
 
-  genePair = do.call(rbind, sapply(deltarank, '[', 1))
-  rankValue = do.call(cbind, sapply(deltarank, '[', 2))
-  genePair = cbind(genePair, paste0('V', 1:nrow(genePair)))
+  genePair_ = do.call(rbind, sapply(pairwise_, '[', 1))
+  rankValue_ = do.call(cbind, sapply(pairwise_, '[', 2))
+  genePair_ = cbind(genePair_, paste0('V', 1:nrow(genePair_)))
 
-  return(list(genePair, rankValue))
+  return(list(genePair_, rankValue_))
 
 }
