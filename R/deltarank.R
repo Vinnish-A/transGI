@@ -7,15 +7,12 @@
 #' @keywords internal
 rank.matrix = function(mat_) {
 
-  rankmatrix = c()
-  for (i in 1: ncol(mat_)){
-    temp = rank(mat_[, i])
-    rankmatrix = cbind(rankmatrix, temp)
-  }
-  colnames(rankmatrix) = colnames(mat_)
-  rownames(rankmatrix) = rownames(mat_)
+  rankmatrix_ = sapply(mat_, rank)
 
-  return(rankmatrix)
+  colnames(rankmatrix_) = colnames(mat_)
+  rownames(rankmatrix_) = rownames(mat_)
+
+  return(rankmatrix_)
 
 }
 
@@ -25,7 +22,7 @@ rank.matrix = function(mat_) {
 #'
 #' @param mat_ Expression matrix, which is expected to have Gene Symbol represented by rownames and samples represented by colnames.
 #' @param net_ Background network
-#' @param nThreads_ Threads to use for transformations, the recommended number of  is between 3 and 6.
+#' @param nThreads_ Threads to use for transformations, the recommended number of sessions is between 3 and 6.
 #'
 #' @importFrom future.apply future_lapply
 #'
