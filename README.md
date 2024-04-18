@@ -63,7 +63,14 @@ testMat = system.file('extdata', 'testMat.csv', package = 'transGI') |>
   read.csv(row.names = 'symbol') |>
   as.matrix() |> 
   _[1:2000, ]
-res = transGI(testMat, 'deltarank', 'reactome', nThreads_ = 4)
+res = transGI(testMat, 'deltarank', 'reactome')
+```
+
+Use `future` component to implement parallel computing.
+
+``` r
+future::plan('multisession', workers = 4)
+res = transGI(testMat, 'deltarank', 'reactome')
 ```
 
 Use `cal_HR` and a series of evaluation function to select features.
@@ -88,7 +95,7 @@ res_enrich = enrichGraph(symbols, db_ = db, pathways_ = 'all', bgNet_ = 'reactom
 autoBar(res_enrich)
 ```
 
-<img src="man/figures/README-unnamed-chunk-4-1.png" width="100%" style="display: block; margin: auto;" />
+<img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" style="display: block; margin: auto;" />
 
 Use `visNet` to visualize gene interactions.
 
@@ -96,7 +103,7 @@ Use `visNet` to visualize gene interactions.
 visNet(symbols, degree_ = 1)
 ```
 
-<img src="man/figures/README-unnamed-chunk-5-1.png" width="100%" style="display: block; margin: auto;" />
+<img src="man/figures/README-unnamed-chunk-6-1.png" width="100%" style="display: block; margin: auto;" />
 
 ## Future Plan
 

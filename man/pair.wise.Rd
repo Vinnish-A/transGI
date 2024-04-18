@@ -10,8 +10,6 @@ pair.wise(mat_, net_, nThreads_ = 1)
 \item{mat_}{Expression matrix, which is expected to have Gene Symbol represented by rownames and samples represented by colnames.}
 
 \item{net_}{Background network}
-
-\item{nThreads_}{Threads to use for transformations, the recommended number of  is between 3 and 6.}
 }
 \description{
 Used to output a binary matrix according to the expression level of the prior gene pairs

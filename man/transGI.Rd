@@ -8,7 +8,6 @@ transGI(
   testMat_,
   method_ = "deltarank",
   bgNet_ = "reactome",
-  nThreads_ = 1,
   maskMat_ = NULL,
   controlMat_ = NULL
 )
@@ -22,8 +21,6 @@ For detailed information, please refer to \code{\link{delta.rank}} or \code{\lin
 \item{bgNet_}{Background network type. Currently, prior gene-gene interactions from Reactome and STRING databases are included.
 You can specify to use either 'reactome' or 'string' by passing the respective argument.
 If you wish to use custom gene-gene interaction pairs, please pass a dataframe containing two columns of genes.}
-
-\item{nThreads_}{Threads to use for transformations, the recommended number of  is between 3 and 6.}
 
 \item{maskMat_}{A binary matrix, with the same dimension as \code{testMat_}, is integrated-term-by-term with \code{testMat_},
 which means that the values of the corresponding positions in \code{testMat_} are penalized to the minimum value for function-based integration.}

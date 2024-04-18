@@ -4,28 +4,26 @@
 #'
 #' @param mat_ Expression matrix, which is expected to have Gene Symbol represented by rownames and samples represented by colnames.
 #' @param net_ Background network
-#' @param nThreads_ Threads to use for transformations, the recommended number of  is between 3 and 6.
 #'
 #' @importFrom future.apply future_lapply
+#' @importFrom future nbrOfWorkers
 #'
 #' @keywords internal
 pair.wise = function(mat_, net_, nThreads_ = 1) {
 
-  calculator_ = function(i__) {
-    r1__ = which(rownames(mat_) == net_[[1]][i])
-    r2__ = which(rownames(mat_) == net_[[2]][i])
-    r__  = as.numeric(mat_[r1, ] > mat_[r2, ])
+  message('Ready to process pairwising...')
+  myApply_ = ifelse(nbrOfWorkers() > 1, future_lapply, lapply)
+  pairwise_ = myApply_(
+    X = 1:nrow(net_),
+    FUN = function(i__) {
+      r1__ = which(rownames(mat_) == net_[[1]][i])
+      r2__ = which(rownames(mat_) == net_[[2]][i])
+      r__  = as.numeric(mat_[r1, ] > mat_[r2, ])
 
-    return(list(as.matrix(net_[i__, ]), r__))
-  }
-
-  if (nThreads_ != 1) {
-    future::plan('multisession', workers = nThreads_)
-    pairwise_ = future.apply::future_lapply(1:nrow(net_), calculator_)
-    future::plan('sequential')
-  } else {
-    pairwise_ = lapply(1:nrow(net_), calculator_)
-  }
+      return(list(as.matrix(net_[i__, ]), r__))
+    }
+  )
+  message('Processed')
 
   genePair_ = do.call(rbind, sapply(pairwise_, '[', 1))
   rankValue_ = do.call(cbind, sapply(pairwise_, '[', 2))

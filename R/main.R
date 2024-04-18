@@ -8,7 +8,6 @@
 #' @param bgNet_ Background network type. Currently, prior gene-gene interactions from Reactome and STRING databases are included.
 #' You can specify to use either 'reactome' or 'string' by passing the respective argument.
 #' If you wish to use custom gene-gene interaction pairs, please pass a dataframe containing two columns of genes.
-#' @param nThreads_ Threads to use for transformations, the recommended number of  is between 3 and 6.
 #' @param maskMat_ A binary matrix, with the same dimension as \code{testMat_}, is integrated-term-by-term with \code{testMat_},
 #' which means that the values of the corresponding positions in \code{testMat_} are penalized to the minimum value for function-based integration.
 #' @param controlMat_ Expression matrix with the same dimensions as \code{testMat_}, usually normal tissue.
@@ -24,7 +23,7 @@
 #'   read.csv(row.names = 'symbol') |>
 #'   as.matrix()
 #' result = transGI(testMat, 'deltarank', 'reactome')
-transGI = function(testMat_, method_ = 'deltarank', bgNet_ = 'reactome', nThreads_ = 1, maskMat_ = NULL, controlMat_ = NULL) {
+transGI = function(testMat_, method_ = 'deltarank', bgNet_ = 'reactome', maskMat_ = NULL, controlMat_ = NULL) {
 
   match.arg(method_, c('deltarank', 'pairwise'))
   if (is.character(bgNet_)) {
@@ -40,8 +39,8 @@ transGI = function(testMat_, method_ = 'deltarank', bgNet_ = 'reactome', nThread
 
   res_ = switch(
     method_,
-    "deltarank" = delta.rank(testMat_, bgNet_, nThreads_),
-    "pairwise"  = pair.wise(testMat_, bgNet_, nThreads_)
+    "deltarank" = delta.rank(testMat_, bgNet_),
+    "pairwise"  = pair.wise(testMat_, bgNet_)
   )
 
   if (!is.null(controlMat_)) {

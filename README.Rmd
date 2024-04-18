@@ -61,7 +61,14 @@ testMat = system.file('extdata', 'testMat.csv', package = 'transGI') |>
   read.csv(row.names = 'symbol') |>
   as.matrix() |> 
   _[1:2000, ]
-res = transGI(testMat, 'deltarank', 'reactome', nThreads_ = 4)
+res = transGI(testMat, 'deltarank', 'reactome')
+```
+
+Use `future` component to implement parallel computing.
+
+```{r eval=FALSE}
+future::plan('multisession', workers = 4)
+res = transGI(testMat, 'deltarank', 'reactome')
 ```
 
 Use `cal_HR` and a series of evaluation function to select features. Execute `selector` to get existing methods.

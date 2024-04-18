@@ -4,14 +4,12 @@
 \alias{delta.rank}
 \title{delta.rank}
 \usage{
-delta.rank(mat_, net_, nThreads_ = 1)
+delta.rank(mat_, net_)
 }
 \arguments{
 \item{mat_}{Expression matrix, which is expected to have Gene Symbol represented by rownames and samples represented by colnames.}
 
 \item{net_}{Background network}
-
-\item{nThreads_}{Threads to use for transformations, the recommended number of  is between 3 and 6.}
 }
 \description{
 Used to convert the expression matrix to rank matrix first, and then calculate deltarank according to prior gene pairs
